@@ -36,65 +36,92 @@ async def final_parsing():
 
                 # Step: Combine data into rows, repeating other fields based on number of kelas
                 for idx in range(len(brand_tags)):
-                    if idx >= len(kode_kelas):
-                        row = {
+                    # Get list of class codes for this brand
+                    current_classes = kode_kelas[idx] if isinstance(kode_kelas[idx], list) else [kode_kelas[idx]]
+
+                    if len(current_classes) == 0:
+                        if idx >= len(brand_tags):
+                            row = {
+                            "Brand": "",
+                            "Nomor Permohonan": nomor_permohonan[idx],
+                            "Tahun Permohonan": tahun_permohonan[idx],
+                            "Status": status[idx],
+                            "Kode Kelas": "",
+                            "Deskripsi Kelas": ""
+                            }
+                        else:
+                            row = {
                             "Brand": brand_tags[idx],
                             "Nomor Permohonan": nomor_permohonan[idx],
                             "Tahun Permohonan": tahun_permohonan[idx],
                             "Status": status[idx],
                             "Kode Kelas": "",
                             "Deskripsi Kelas": ""
-                        }
+                            }
+                    elif len(current_classes) == 1:
+                        if idx >= len(brand_tags):
+                            row = {
+                            "Brand": "",
+                            "Nomor Permohonan": nomor_permohonan[idx],
+                            "Tahun Permohonan": tahun_permohonan[idx],
+                            "Status": status[idx],
+                            "Kode Kelas": current_classes[0],
+                            "Deskripsi Kelas": class_description[idx]
+                            }
+                        else:
+                            row = {
+                            "Brand": brand_tags[idx],
+                            "Nomor Permohonan": nomor_permohonan[idx],
+                            "Tahun Permohonan": tahun_permohonan[idx],
+                            "Status": status[idx],
+                            "Kode Kelas": current_classes[0],
+                            "Deskripsi Kelas": class_description[idx]
+                            }
                         # Append to final structured list
                         final_data.append(row)
                     else:
-                        # Get list of class codes for this brand
-                        current_classes = kode_kelas[idx] if isinstance(kode_kelas[idx], list) else [kode_kelas[idx]]
+                        mult_class_description = []
+                        # Step 2: Enter keyword and search
+                        await page.fill("input >> nth=0", nomor_permohonan[idx])
+                        await asyncio.sleep(1)
+                        await page.keyboard.press("Enter")
+                        # print(f"Searching for: {nomor_permohonan[idx]}")
 
-                        if len(current_classes) == 1:
-                            row = {
-                                "Brand": brand_tags[idx],
+                        # Step 3: Click the first result
+                        await page.wait_for_selector('a[href^="/link/"]', timeout=20000)
+                        await asyncio.sleep(1)
+                        await page.click('a[href^="/link/"]')
+                        # print("Clicked the first search result")
+
+                        # Step 4: Wait for detail page to load
+                        await page.wait_for_selector('text=Nomor Registrasi', timeout=20000)
+                        # print("Detail page loaded")
+
+                        # Step 5: Scrape HTML content
+                        content = await page.content()
+                        soup = BeautifulSoup(content, 'html.parser')
+
+                        #Parse deskripsi kelas
+                        # Always iterate over results of find_all
+                        for tbody in soup.find_all('tbody'):
+                            if isinstance(tbody, Tag):  # Ensure it's a Tag object
+                                for row in tbody.find_all('tr'):
+                                    if isinstance(row, Tag):  # Ensure it's a Tag object
+                                        tds = row.find_all('td')
+                                        if len(tds) >= 2:
+                                            mult_class_description.append(tds[1].get_text(strip=True))
+                        
+                        for i in range(len(current_classes)):
+                            if idx >= len(brand_tags):
+                                row = {
+                                "Brand": "",
                                 "Nomor Permohonan": nomor_permohonan[idx],
                                 "Tahun Permohonan": tahun_permohonan[idx],
                                 "Status": status[idx],
-                                "Kode Kelas": kode_kelas[idx],
-                                "Deskripsi Kelas": class_description[idx]
-                            }
-                            # Append to final structured list
-                            final_data.append(row)
-                        else:
-                            mult_class_description = []
-                            # Step 2: Enter keyword and search
-                            await page.fill("input >> nth=0", nomor_permohonan[idx])
-                            await asyncio.sleep(1)
-                            await page.keyboard.press("Enter")
-                            # print(f"Searching for: {nomor_permohonan[idx]}")
-
-                            # Step 3: Click the first result
-                            await page.wait_for_selector('a[href^="/link/"]', timeout=20000)
-                            await asyncio.sleep(1)
-                            await page.click('a[href^="/link/"]')
-                            # print("Clicked the first search result")
-
-                            # Step 4: Wait for detail page to load
-                            await page.wait_for_selector('text=Nomor Registrasi', timeout=20000)
-                            # print("Detail page loaded")
-
-                            # Step 5: Scrape HTML content
-                            content = await page.content()
-                            soup = BeautifulSoup(content, 'html.parser')
-
-                            #Parse deskripsi kelas
-                            # Always iterate over results of find_all
-                            for tbody in soup.find_all('tbody'):
-                                if isinstance(tbody, Tag):  # Ensure it's a Tag object
-                                    for row in tbody.find_all('tr'):
-                                        if isinstance(row, Tag):  # Ensure it's a Tag object
-                                            tds = row.find_all('td')
-                                            if len(tds) >= 2:
-                                                mult_class_description.append(tds[1].get_text(strip=True))
-
-                            for i in range(len(mult_class_description)):
+                                "Kode Kelas": current_classes[i],
+                                "Deskripsi Kelas": mult_class_description[i]
+                                }
+                            else:
                                 row = {
                                 "Brand": brand_tags[idx],
                                 "Nomor Permohonan": nomor_permohonan[idx],
@@ -103,8 +130,8 @@ async def final_parsing():
                                 "Kode Kelas": current_classes[i],
                                 "Deskripsi Kelas": mult_class_description[i]
                                 }
-                                # Append to final structured list
-                                final_data.append(row)
+                            # Append to final structured list
+                            final_data.append(row)
                         
             #====== MULTIPLE CLASS END HERE ======
 
@@ -115,12 +142,9 @@ async def final_parsing():
             
         with open('output_final.csv', 'w', newline='', encoding='utf-8') as csvfile:
             if final_data:
-                fieldnames = ['No'] + list(final_data[0].keys())
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                writer = csv.DictWriter(csvfile, fieldnames=final_data[0].keys())
                 writer.writeheader()
-                for idx, row in enumerate(final_data, start=1):
-                    row_with_index = {'No': idx, **row}
-                    writer.writerow(row_with_index)
+                writer.writerows(final_data)
 
 async def scrape_and_navigate_pagination(url, target_page_number):
     async with async_playwright() as p:
@@ -155,7 +179,7 @@ async def scrape_and_navigate_pagination(url, target_page_number):
             
 
             # Now, loop through the remaining pages
-            for i in range(1, target_page_number + 1):
+            for i in range(3, target_page_number + 1):
                 # print("-" * 20)
                 page_button_selector = page.get_by_role("button", name=str(i), exact=True)
                 
@@ -217,9 +241,9 @@ async def scrape_and_navigate_pagination(url, target_page_number):
                 #     f.write(str(soup.prettify()))
                 # # print(f"Data parsed")
 
-                screenshot_filename = f'scraped_page_{i}.png'
-                await page.screenshot(path=screenshot_filename, full_page=True)
-                print(f"Screenshot saved to {screenshot_filename}")
+                # screenshot_filename = f'scraped_page_{i}.png'
+                # await page.screenshot(path=screenshot_filename, full_page=True)
+                # # print(f"Screenshot saved to {screenshot_filename}")
 
         except Exception as e:
             # print(f"An error occurred: {e}")
@@ -231,7 +255,7 @@ async def scrape_and_navigate_pagination(url, target_page_number):
 
 async def main_playwright():
     url_to_scrape = "https://pdki-indonesia.dgip.go.id/search"
-    await scrape_and_navigate_pagination(url_to_scrape, 10) 
+    await scrape_and_navigate_pagination(url_to_scrape, 3) 
     await final_parsing()
 
 if __name__ == '__main__':

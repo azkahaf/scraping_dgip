@@ -28,9 +28,8 @@ async def scrape_with_playwright(url):
             tahun_permohonan = []
             for each in nomor_permohonan_raw:
                 temp_nomor_permohonan = each.get_text(strip=True)
-                if temp_nomor_permohonan:
-                    nomor_permohonan.append(temp_nomor_permohonan)
-                    tahun_permohonan.append(temp_nomor_permohonan[3:7])
+                nomor_permohonan.append(temp_nomor_permohonan)
+                tahun_permohonan.append(temp_nomor_permohonan[3:7])
             print(nomor_permohonan)
             print(tahun_permohonan)
 
@@ -39,8 +38,7 @@ async def scrape_with_playwright(url):
             brand_tags = []
             for each in brand_tags_raw:
                 brand_name = each.get_text(strip=True)
-                if brand_name:
-                    brand_tags.append(brand_name)
+                brand_tags.append(brand_name)
             print(brand_tags)
 
             #Parse kode kelas
@@ -48,9 +46,8 @@ async def scrape_with_playwright(url):
             kode_kelas = []
             for each in kode_kelas_raw:
                 temp_kode_kelas = each.get_text(strip=True)
-                if temp_kode_kelas:
-                    if "Kode kelas: " in temp_kode_kelas:
-                        kode_kelas.append(temp_kode_kelas.replace("Kode kelas: ", ""))
+                if "Kode kelas: " in temp_kode_kelas:
+                    kode_kelas.append(temp_kode_kelas.replace("Kode kelas: ", ""))
             print(kode_kelas)
 
             #Parse status
@@ -58,8 +55,7 @@ async def scrape_with_playwright(url):
             status = []
             for each in status_raw:
                 temp_status = each.get_text(strip=True)
-                if temp_status:
-                    status.append(temp_status.replace("(TM) ", ""))
+                status.append(temp_status.replace("(TM) ", ""))
             print(status)
 
             #Parse deskripsi kelas
@@ -67,8 +63,7 @@ async def scrape_with_playwright(url):
             class_description = []
             for each in class_description_raw:
                 temp_class_description = each.get_text(strip=True)
-                if temp_class_description:
-                    class_description.append(temp_class_description)
+                class_description.append(temp_class_description)
             print(class_description)
             print(len(class_description))
 
