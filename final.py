@@ -231,7 +231,7 @@ async def scrape_and_navigate_pagination(url, target_page_number):
 
 async def main_playwright():
     url_to_scrape = "https://pdki-indonesia.dgip.go.id/search"
-    await scrape_and_navigate_pagination(url_to_scrape, 10) 
+    await scrape_and_navigate_pagination(url_to_scrape, 100) 
     await final_parsing()
 
 if __name__ == '__main__':
