@@ -1,4 +1,5 @@
 import asyncio
+from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
 async def scrape_with_playwright(url):
@@ -16,10 +17,11 @@ async def scrape_with_playwright(url):
 
             # Get the full HTML
             content = await page.content()
+            soup = BeautifulSoup(content, 'html.parser')
             
             # Save to txt file
             with open('scraped_page.txt', 'w', encoding='utf-8') as f:
-                f.write(content)
+                f.write(str(soup.prettify()))
             print("Data saved")
 
             # Take a screenshot to track progress

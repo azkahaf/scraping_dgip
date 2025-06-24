@@ -1,5 +1,6 @@
 import asyncio
 from re import I
+from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 
 async def scrape_and_navigate_pagination(url, target_page_number):
@@ -36,11 +37,12 @@ async def scrape_and_navigate_pagination(url, target_page_number):
 
                 print(f"Page {i} loaded. Extracting HTML...")
                 content = await page.content()
+                soup = BeautifulSoup(content, 'html.parser')
 
                 # Save the HTML to a file
                 output_filename = f'flash_page_{i}.txt'
                 with open(output_filename, 'w', encoding='utf-8') as f:
-                    f.write(content)
+                    f.write(str(soup.prettify()))
                 print(f"Data saved to {output_filename}")
 
                 # Take a screenshot of the new page
