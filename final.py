@@ -57,7 +57,7 @@ async def final_parsing():
                                 "Nomor Permohonan": nomor_permohonan[idx],
                                 "Tahun Permohonan": tahun_permohonan[idx],
                                 "Status": status[idx],
-                                "Kode Kelas": kode_kelas[idx],
+                                "Kode Kelas": current_classes[0],
                                 "Deskripsi Kelas": class_description[idx]
                             }
                             # Append to final structured list
@@ -94,7 +94,7 @@ async def final_parsing():
                                             if len(tds) >= 2:
                                                 mult_class_description.append(tds[1].get_text(strip=True))
 
-                            for i in range(len(mult_class_description)):
+                            for i in range(len(current_classes)):
                                 row = {
                                 "Brand": brand_tags[idx],
                                 "Nomor Permohonan": nomor_permohonan[idx],
@@ -176,10 +176,16 @@ async def scrape_and_navigate_pagination(url, target_page_number):
                 #Parse kode kelas
                 kode_kelas_raw = soup.find_all('p', class_="text-sm")
                 for each in kode_kelas_raw:
+                    valid = True
                     temp_kode_kelas = each.get_text(strip=True)
-                    if "Kode kelas: " in temp_kode_kelas:
-                        temp_fix_class = temp_kode_kelas.replace("Kode kelas: ", "").split(",")
-                        kode_kelas.append(temp_fix_class[0])
+                    temp_fix_class = temp_kode_kelas.replace("Kode kelas: ", "").split(",")
+                    for each_in in temp_fix_class:
+                        if not each_in.isnumeric() and each_in != "":
+                            valid = False
+                            break
+                    if not valid:
+                        continue
+                    kode_kelas.append(temp_fix_class)
                 # print(kode_kelas)
 
                 #Parse nomor permohonan
@@ -231,7 +237,7 @@ async def scrape_and_navigate_pagination(url, target_page_number):
 
 async def main_playwright():
     url_to_scrape = "https://pdki-indonesia.dgip.go.id/search"
-    await scrape_and_navigate_pagination(url_to_scrape, 100) 
+    await scrape_and_navigate_pagination(url_to_scrape, 10) 
     await final_parsing()
 
 if __name__ == '__main__':
